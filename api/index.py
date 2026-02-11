@@ -52,15 +52,20 @@ def extract_menu_from_image(openai_client, image_b64):
     if not raw_text:
         messages[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
 
-    # OpenAI 클라이언트가 없으면(데모 모드) 기본 데이터 반환 (오늘부터 7일치)
+    # 3. 데모 모드 처리 (AI 클라이언트가 없는 경우)
     if not openai_client:
+        # 간단한 텍스트 검증 시뮬레이션
+        if raw_text:
+            non_menu_keywords = ["구하시오", "정답", "문제", "원", "수학"]
+            if any(k in raw_text for k in non_menu_keywords):
+                return {"error": "급식표가 아닌 이미지가 감지되었습니다. (수학 문제 등으로 보임)"}
+
         from datetime import datetime, timedelta
         mock_data = {}
         days_ko = ["월", "화", "수", "목", "금", "토", "일"]
         for i in range(7):
             date = datetime.now() + timedelta(days=i)
             date_str = date.strftime("%m/%d") + f"({days_ko[date.weekday()]})"
-            # 샘플 데이터 순환 배치
             samples = [
                 "카레라이스, 미역국, 계란말이",
                 "비빔밥, 된장찌개, 떡갈비",
