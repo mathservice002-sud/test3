@@ -313,14 +313,17 @@
             z-index: 1000;
         }
 
-        #demoBadge {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(4px);
-            padding: 4px 12px;
+        #versionBadge {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: var(--primary-dark);
+            padding: 4px 14px;
             border-radius: 50px;
-            font-size: 0.8rem;
-            font-weight: 700;
+            font-size: 0.75rem;
+            font-weight: 800;
             margin-left: 10px;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -331,7 +334,7 @@
     <div class="header-section">
         <div class="logo-box">
             <h1>급식 해결사! 🍽️</h1>
-            <span id="demoBadge" style="display: none;">DEMO MODE</span>
+            <span id="versionBadge" style="display: none;">PREMIUM AI</span>
         </div>
         <div class="subtitle">AI가 지켜주는 워킹맘의 자존심, 급식 중복 차단 봇</div>
     </div>
@@ -388,9 +391,17 @@
                 const res = await fetch('/api/config');
                 const data = await res.json();
                 hasServerKey = data.hasServerKey;
-                if (!hasServerKey) document.getElementById('demoBadge').style.display = 'inline-block';
+                if (hasServerKey) {
+                    document.getElementById('versionBadge').style.display = 'inline-block';
+                    document.getElementById('versionBadge').innerText = 'PRO AI ACTIVE';
+                } else {
+                    document.getElementById('versionBadge').style.display = 'inline-block';
+                    document.getElementById('versionBadge').style.background = '#e2e8f0';
+                    document.getElementById('versionBadge').style.color = '#64748b';
+                    document.getElementById('versionBadge').innerText = 'API KEY REQUIRED';
+                }
             } catch (e) {
-                document.getElementById('demoBadge').style.display = 'inline-block';
+                console.error('Config check failed');
             }
         }
         checkConfig();
@@ -458,7 +469,7 @@
                 list.innerHTML = `<div style="padding:1.5rem; background:#fff5f5; color:#c53030; border-radius:12px; border:1px solid #feb2b2; font-size:0.95rem;">
                     <b style="display:block; margin-bottom:0.5rem;">⚠️ 분석 실패</b>
                     ${menuData.error}<br><br>
-                    <small style="color:var(--text-dim);">데모 모드에서는 샘플 외의 이미지는 분석하지 않습니다. 실제 AI 버전은 촬영된 이미지를 정확히 판독합니다.</small>
+                    <small style="color:var(--text-dim);">이미지 화질을 확인하거나, 설정에서 API 키가 올바르게 입력되었는지 확인해 주세요.</small>
                 </div>`;
                 document.getElementById('btnRecommend').disabled = true;
                 return;
