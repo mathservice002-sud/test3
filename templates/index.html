@@ -504,18 +504,9 @@
                 const card = document.createElement('div');
                 card.className = 'recipe-card';
 
-                let imgKeyword = "cooking";
-                if (r.name.includes("감자")) imgKeyword = "potato";
-                if (r.name.includes("국")) imgKeyword = "soup";
-                if (r.name.includes("볶음")) imgKeyword = "stir-fry";
-                if (r.name.includes("떡볶이")) imgKeyword = "topokki";
-                if (r.name.includes("샌드위치")) imgKeyword = "sandwich";
-                if (r.name.includes("고기")) imgKeyword = "meat";
-
                 const stepsHtml = r.steps ? `<ol class="step-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>` : "";
 
                 card.innerHTML = `
-                    <img src="https://source.unsplash.com/featured/800x600/?${imgKeyword},koreanfood" class="recipe-img" alt="">
                     <div class="badge-row">
                         <span class="tag tag-time">⏱️ ${r.time}분</span>
                         <span class="tag tag-diff">난이도: ${r.diff}</span>
