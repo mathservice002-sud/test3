@@ -50,12 +50,26 @@ def extract_menu_from_image(openai_client, image_b64):
     if not raw_text:
         messages[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
 
+    # OpenAI 클라이언트가 없으면(데모 모드) 기본 데이터 반환 (오늘부터 7일치)
     if not openai_client:
-        return {
-            "02/11(수)": "카레라이스, 미역국, 계란말이",
-            "02/12(목)": "비빔밥, 된장찌개, 떡갈비",
-            "02/13(금)": "돈가스, 우동, 양배추샐러드"
-        }
+        from datetime import datetime, timedelta
+        mock_data = {}
+        days_ko = ["월", "화", "수", "목", "금", "토", "일"]
+        for i in range(7):
+            date = datetime.now() + timedelta(days=i)
+            date_str = date.strftime("%m/%d") + f"({days_ko[date.weekday()]})"
+            # 샘플 데이터 순환 배치
+            samples = [
+                "카레라이스, 미역국, 계란말이",
+                "비빔밥, 된장찌개, 떡갈비",
+                "돈가스, 우동, 양배추샐러드",
+                "제육덮밥, 콩나물국, 감자채볶음",
+                "생선구이, 육개장, 시금치나물",
+                "볶음밥, 짬뽕국, 단무지무침",
+                "불고기덮밥, 만두국, 김치"
+            ]
+            mock_data[date_str] = samples[i % len(samples)]
+        return mock_data
 
     response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
     raw = response.choices[0].message.content
