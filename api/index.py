@@ -242,59 +242,59 @@ def api_recommend():
         ]
         
         click_count = data.get('clickCount', 0)
-        # 콤마, 공백, 슬래시 등으로 구분된 재료 리스트 추출
         ing_list = [i.strip() for i in ingredients.replace(',', ' ').replace('/', ' ').split() if i.strip()]
         
-        # 1. 매칭 알고리즘: 사용자가 입력한 재료가 포함된 레시피 찾기
         matches = []
+        is_fallback = False
+
         if ing_list:
             for r in RECIPE_LIBRARY:
-                # 더 엄격한 매칭: 글자 수가 너무 적으면(1자) 완전 일치만 허용, 길면 부분 일치 허용
                 score = 0
                 for user_ing in ing_list:
-                    for recipe_ing in r['ingredients']:
-                        if len(user_ing) == 1:
-                            if user_ing == recipe_ing: # 1글자면 완전 일치
-                                score += 2
-                        else:
-                            if user_ing in recipe_ing: # 2글자 이상이면 부분 일치 허용
-                                score += 2
+                    # 엄격한 매칭: 1글자면 완전 일치, 2글자 이상이면 부분 일치
+                    found_in_ings = any((user_ing == ri if len(user_ing) == 1 else user_ing in ri) for ri in r['ingredients'])
+                    found_in_name = (user_ing == r['name'] if len(user_ing) == 1 else user_ing in r['name'])
                     
-                    # 제목 매칭 가산점
-                    if user_ing in r['name']:
-                        score += 1
+                    if found_in_ings: score += 2
+                    if found_in_name: score += 1
 
                 if score > 0:
                     matches.append((score, r))
             
-            # 매칭된 결과 점수순 정렬
-            matches.sort(key=lambda x: x[0], reverse=True)
-            results = [m[1] for m in matches]
+            if matches:
+                matches.sort(key=lambda x: x[0], reverse=True)
+                results = [m[1] for m in matches]
+            else:
+                # [수정] 재료에 맞는 레시피가 없으면 전체에서 메뉴 추천 (폴백)
+                results = RECIPE_LIBRARY.copy()
+                random.seed(42) # 데모용 일관성
+                random.shuffle(results)
+                is_fallback = True
         else:
-            # 입력 재료가 아예 없으면 기본 추천 (전체 라이브러리)
             results = RECIPE_LIBRARY.copy()
             random.shuffle(results)
-        
-        # 2. 결과 처리
-        if not results:
-            return jsonify({
-                "analysis": f"입력하신 재료({', '.join(ing_list)})와 매칭되는 고정 레시피가 데모 데이터에 없습니다.",
-                "recipes": [],
-                "message": "데모 모드에서는 '고등어', '무', '소고기', '떡', '두부', '계란', '감자', '파프리카' 위주로 준비되어 있어요. 실제 버전은 모든 재료를 완벽 분석합니다! 🍀"
-            })
-            
+
+        # 횟수 소진 처리
         if click_count >= len(results):
             return jsonify({
-                "analysis": "현재 조합으로 가능한 모든 실존 레시피를 확인하셨습니다!",
+                "analysis": "현재 준비된 모든 데모 메뉴를 확인하셨습니다.",
                 "recipes": [],
-                "message": "더 이상의 추천이 없습니다. 다른 재료를 추가하거나 초기화해 보세요! 😊"
+                "message": "초기화 버튼을 눌러 처음부터 다시 보거나 다른 재료를 입력해 보세요! 😊"
             })
 
         chosen = results[click_count]
+        
+        # 폴백(무관한 추천)인 경우 메시지 조정
+        analysis = str(chosen['analysis'])
+        message = str(chosen['message'])
+        if is_fallback:
+            analysis = f"입력하신 재료와 딱 맞는 레시피는 아니지만, 이런 메뉴는 어떠세요? {analysis}"
+            message = "데모 모드라 재료 매칭에 한계가 있어요. 실제 AI 버전은 모든 재료를 분석해 드립니다! 🍀"
+
         return jsonify({
-            "analysis": chosen['analysis'],
+            "analysis": analysis,
             "recipes": [chosen],
-            "message": chosen['message']
+            "message": message
         })
 
     # 실제 AI 추천 로직
