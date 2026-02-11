@@ -86,15 +86,69 @@ def api_analyze():
 @app.route('/api/recommend', methods=['POST'])
 def api_recommend():
     data = request.json
+    lunch = data.get('lunch', '')
+    ingredients = data.get('ingredients', '')
     openai_client = get_client(data.get('apiKey'))
+    
     if not openai_client:
-        return jsonify({
-            "analysis": "점심은 카레라이스였습니다. 저녁은 겹치지 않게 '애호박 계란국'을 추천합니다!",
-            "recipes": [{"name": "애호박 계란국", "desc": "부드럽고 고소한 국물", "time": "15", "diff": "쉬움", "ingredients": ["애호박", "계란"], "steps": ["애호박을 썬다", "육수에 넣고 끓이다 계란을 푼다"], "tip": "새우젓으로 간을 하세요"}],
-            "message": "오늘도 수고 많으셨어요! 아이와 맛있는 식사 되세요. ❤️"
-        })
-    # 실제 추천 로직 (중략 - 기존과 동일)
-    return jsonify({"error": "OpenAI Key required for real-time recipes"})
+        # 데모 모드 전용 다양한 멘트 로직
+        if "카레" in lunch:
+            return jsonify({
+                "analysis": "점심에 향긋한 카레를 먹었으니, 저녁은 자극적이지 않고 부드러운 메뉴가 좋겠어요.",
+                "recipes": [{"name": "애호박 계란국", "desc": "부드럽고 고소한 국물로 속을 편안하게", "time": "15", "diff": "쉬움", "ingredients": ["애호박", "계란"], "steps": ["애호박을 썰어 육수에 넣고 끓인다", "계란을 풀어 줄을 치듯 넣는다"], "tip": "새우젓으로 간을 하면 감칠맛이 살아나요"}],
+                "message": "카레 향에 가득했던 아이의 입맛을 부드럽게 감싸줄 저녁이에요. 오늘 하루도 고군분투하신 당신, 국물 한 모금에 시름도 잊으시길 바라요. 수고하셨습니다! ❤️"
+            })
+        elif "비빔밥" in lunch:
+            return jsonify({
+                "analysis": "점심에 신선한 나물을 듬뿍 먹었네요! 저녁은 아이들이 좋아하는 든든한 고기 반찬 어떠세요?",
+                "recipes": [{"name": "스팸 양파 볶음", "desc": "단짠의 정석, 밥도둑 메뉴", "time": "10", "diff": "매우 쉬움", "ingredients": ["스팸", "양파", "올리고당"], "steps": ["스팸과 양파를 깍둑썰기한다", "노릇하게 볶다가 올리고당 한 스푼!"], "tip": "검은깨를 솔솔 뿌리면 더 먹음직스러워요"}],
+                "message": "비빔밥만큼이나 다채로운 하루를 보내셨을 당신께, 오늘은 조금 쉬운 요리를 선물하고 싶네요. 아이의 '맛있다'는 한마디에 오늘의 피로가 싹 가시길 응원합니다! ✨"
+            })
+        else:
+            return jsonify({
+                "analysis": "점심과 겹치지 않으면서 냉장고 재료를 활용한 최적의 레시피입니다.",
+                "recipes": [{"name": "두부 스테이크", "desc": "겉바속촉, 건강하고 맛있는 한 끼", "time": "20", "diff": "보통", "ingredients": ["두부", "전분가루", "간장소스"], "steps": ["두부 물기를 제거하고 전분을 묻힌다", "팬에 구운 후 소스를 졸인다"], "tip": "어린잎 채소를 곁들이면 레스토랑 분위기가 나요"}],
+                "message": "오늘도 훌륭하게 하루를 버텨내셨네요. 당신의 정성이 가득 담긴 식탁이 아이에게는 가장 큰 행복입니다. 편안하고 따뜻한 밤 되세요. 🍀"
+            })
+
+    # 실제 AI 추천 로직
+    prompt = f"""[상황]
+오늘 아이 점심: {lunch}
+냉장고 재료: {ingredients}
+
+[작업]
+1. 점심과 주재료/조리방식이 겹치지 않는 저녁 메뉴 2개를 추천하세요.
+2. 각 메뉴별 상세 레시피와 팁을 포함하세요.
+3. 지친 부모님을 위한 따뜻한 응원 멘트를 작성하세요. 
+   - 추천한 메뉴의 특성에 맞춰 (예: "매콤한 맛으로 스트레스 풀기", "따뜻한 국물로 몸 녹이기" 등) 아주 구체적이고 다정한 멘트여야 합니다.
+
+[형식 - JSON]
+{{
+  "analysis": "점심 메뉴 분석",
+  "recipes": [
+    {{
+      "name": "요리명",
+      "desc": "설명",
+      "time": "분",
+      "diff": "난이도",
+      "ingredients": ["재료"],
+      "steps": ["단계"],
+      "tip": "팁"
+    }}
+  ],
+  "message": "메뉴 맞춤형 다정한 응원 멘트"
+}}
+반드시 JSON 형식으로만 응답하세요."""
+
+    response = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "당신은 육아에 지친 부모님을 위로하는 공감 능력이 뛰어난 요리 전문가입니다."},
+            {"role": "user", "content": prompt}
+        ],
+        response_format={"type": "json_object"}
+    )
+    return jsonify(json.loads(response.choices[0].message.content))
 
 # Vercel을 위한 핸들러
 app = app
