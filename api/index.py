@@ -29,7 +29,7 @@ def get_client(api_key=None):
             return {"type": "openai", "client": OpenAI(api_key=key)}
         elif key.startswith("AIza"):
             genai.configure(api_key=key)
-            return {"type": "gemini", "client": genai.GenerativeModel('gemini-1.5-flash')}
+            return {"type": "gemini", "client": genai.GenerativeModel('gemini-2.0-flash')}
     except Exception as e:
         print(f"Client Init Error: {e}")
     return None
