@@ -7,6 +7,8 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
+from google.cloud import vision
+import io
 
 # 환경 변수 로드
 load_dotenv()
@@ -28,29 +30,73 @@ def get_client(api_key=None):
         return None
     return OpenAI(api_key=key)
 
-def extract_menu_from_image(client, image_b64):
-    """급식표 이미지에서 날짜별 메뉴 추출 (GPT-4o Vision)"""
-    prompt = """당신은 학교 급식표(식단표) OCR 전문가입니다.
+def extract_menu_google_vision(image_b64):
+    """Google Cloud Vision API를 사용하여 텍스트 추출"""
+    try:
+        # base64 이미지를 바이트로 변환
+        content = base64.b64decode(image_b64)
+        image = vision.Image(content=content)
+        
+        # 클라이언트 초기화 (환경 변수 또는 인증 파일 필요)
+        client = vision.ImageAnnotatorClient()
+        response = client.text_detection(image=image)
+        texts = response.text_annotations
+        
+        if texts:
+            # 첫 번째 결과가 전체 추출 텍스트
+            return texts[0].description
+        return ""
+    except Exception as e:
+        print(f"Google Vision Error: {e}")
+        return None
+
+def extract_menu_from_image(openai_client, image_b64):
+    """이미지에서 메뉴 추출 (Google Vision으로 읽고 OpenAI로 구조화)"""
+    
+    # 1. Google Vision으로 텍스트 추출 시도
+    raw_text = extract_menu_google_vision(image_b64)
+    
+    if raw_text:
+        # Google Vision이 읽은 텍스트를 OpenAI를 이용해 JSON으로 정제
+        prompt = f"""아래는 학교 급식표 이미지에서 추출된 텍스트입니다. 
+이 텍스트를 분석하여 날짜별 점심 메뉴를 JSON 형식으로 정리하세요.
+
+날짜 형식: "MM/DD(요일)" (예: "02/11(수)")
+메뉴: 쉼표로 구분된 문자열
+
+[추출된 텍스트]
+{raw_text}
+
+반드시 ```json ... ``` 블록 안에 JSON 데이터만 응답하세요."""
+    else:
+        # Google Vision 실패 시 GPT-4o Vision으로 직접 분석 시도 (백업)
+        prompt = """당신은 학교 급식표(식단표) OCR 전문가입니다.
 이미지에서 날짜별 점심 메뉴를 찾아 아래 형식의 JSON으로만 반환하세요.
 날짜 형식: "MM/DD(요일)" (예: "02/10(월)")
 메뉴: 쉼표로 구분된 문자열
 결과는 반드시 ```json ... ``` 블록 안에 넣으세요.
 이미지에 급식표가 없다면 {}를 반환하세요."""
 
-    response = client.chat.completions.create(
+    # OpenAI를 사용한 구조화 또는 직접 분석
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt}
+            ]
+        }
+    ]
+    
+    # 가공 데이터가 없는 경우만 이미지를 다시 보냄 (Vision 사용)
+    if not raw_text:
+        messages[0]["content"].append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}
+        })
+
+    response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}
-                    },
-                ],
-            }
-        ],
+        messages=messages,
         max_tokens=2000,
         temperature=0.1,
     )
