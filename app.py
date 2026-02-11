@@ -268,12 +268,15 @@ def api_recommend():
                 matches.sort(key=lambda x: x[0], reverse=True)
                 results = [m[1] for m in matches]
             else:
-                # [수정] 재료에 맞는 레시피가 없으면 전체에서 메뉴 추천 (폴백)
-                results = RECIPE_LIBRARY.copy()
-                random.seed(42) # 데모용 일관성
-                random.shuffle(results)
-                is_fallback = True
+                # [수정] 재료에 맞는 레시피가 없으면 레시피 카드 없이 '메뉴 추천'만 수행
+                available_menus = ", ".join([str(r['name']) for r in RECIPE_LIBRARY])
+                return jsonify({
+                    "analysis": f"입력하신 재료({', '.join([str(i) for i in ing_list])})와 매칭되는 상세 레시피를 데모 데이터에서 찾지 못했습니다.",
+                    "recipes": [],
+                    "message": f"대신 이런 메뉴들은 어떠세요? ✨\n[{available_menus}]\n\n*실제 AI 버전은 어떤 재료든 실시간으로 레시피를 생성해 드립니다!*"
+                })
         else:
+            # 입력 재료가 아예 없는 경우에만 전체 라이브러리 순환
             results = RECIPE_LIBRARY.copy()
             random.shuffle(results)
 
@@ -287,17 +290,10 @@ def api_recommend():
 
         chosen = results[click_count]
         
-        # 폴백(무관한 추천)인 경우 메시지 조정
-        analysis = str(chosen['analysis'])
-        message = str(chosen['message'])
-        if is_fallback:
-            analysis = f"입력하신 재료와 딱 맞는 레시피는 아니지만, 이런 메뉴는 어떠세요? {analysis}"
-            message = "데모 모드라 재료 매칭에 한계가 있어요. 실제 AI 버전은 모든 재료를 분석해 드립니다! 🍀"
-
         return jsonify({
-            "analysis": analysis,
+            "analysis": str(chosen['analysis']),
             "recipes": [chosen],
-            "message": message
+            "message": str(chosen['message'])
         })
 
     prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}. 점심과 겹치지 않는 저녁 메뉴 2개와 레시피, 그리고 지친 부모님을 위한 맞춤형 응원 멘트를 JSON으로 작성해줘."""
