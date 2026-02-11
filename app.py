@@ -208,14 +208,28 @@ def api_recommend():
         ]
         
         click_count = data.get('clickCount', 0)
-        ing_list = [i.strip() for i in ingredients.replace(',', ' ').split() if i.strip()]
+        # 콤마, 공백, 슬래시 등으로 구분된 재료 리스트 추출
+        ing_list = [i.strip() for i in ingredients.replace(',', ' ').replace('/', ' ').split() if i.strip()]
         
         # 1. 매칭 알고리즘: 사용자가 입력한 재료가 포함된 레시피 찾기
         matches = []
         if ing_list:
             for r in RECIPE_LIBRARY:
-                # 사용자가 입력한 재료 중 하나라도 레시피 재료나 이름에 포함되면 매칭
-                score = sum(1 for user_ing in ing_list if any(user_ing in ri for ri in r['ingredients']) or user_ing in r['name'])
+                # 더 엄격한 매칭: 글자 수가 너무 적으면(1자) 완전 일치만 허용, 길면 부분 일치 허용
+                score = 0
+                for user_ing in ing_list:
+                    for recipe_ing in r['ingredients']:
+                        if len(user_ing) == 1:
+                            if user_ing == recipe_ing: # 1글자면 완전 일치
+                                score += 2
+                        else:
+                            if user_ing in recipe_ing: # 2글자 이상이면 부분 일치 허용
+                                score += 2
+                    
+                    # 제목 매칭 가산점
+                    if user_ing in r['name']:
+                        score += 1
+
                 if score > 0:
                     matches.append((score, r))
             
@@ -223,23 +237,23 @@ def api_recommend():
             matches.sort(key=lambda x: x[0], reverse=True)
             results = [m[1] for m in matches]
         else:
-            # 입력 재료가 아예 없으면 전체 라이브러리 (기본 순서)
+            # 입력 재료가 아예 없으면 기본 추천 (전체 라이브러리)
             results = RECIPE_LIBRARY.copy()
+            random.shuffle(results)
         
-        # 2. 결과가 없는 경우 처리
-        if not results and ing_list: # ing_list가 있는데 결과가 없는 경우
+        # 2. 결과 처리
+        if not results:
             return jsonify({
-                "analysis": f"입력하신 재료({', '.join(ing_list)})로 만들 수 있는 메뉴를 데모 모드에서 찾지 못했습니다.",
+                "analysis": f"입력하신 재료({', '.join(ing_list)})와 매칭되는 고정 레시피가 데모 데이터에 없습니다.",
                 "recipes": [],
-                "message": "데모 모드에서는 '고등어', '무', '소고기', '떡', '두부', '계란', '감자', '파프리카' 위주로 준비되어 있어요. 실제 AI 버전은 모든 재료를 분석해 드립니다! 🍀"
+                "message": "데모 모드에서는 '고등어', '무', '소고기', '떡', '두부', '계란', '감자', '파프리카' 위주로 준비되어 있어요. 실제 버전은 모든 재료를 완벽 분석합니다! 🍀"
             })
             
-        # 3. 모든 결과 소진 시 처리
         if click_count >= len(results):
             return jsonify({
-                "analysis": "현재 준비된 모든 관련 레시피를 보셨습니다!",
+                "analysis": "현재 조합으로 가능한 모든 실존 레시피를 확인하셨습니다!",
                 "recipes": [],
-                "message": "입력하신 재료와 관련된 실존 메뉴 추천이 모두 끝났습니다. 다른 재료를 입력하거나 초기화해 보세요! 😊"
+                "message": "더 이상의 추천이 없습니다. 다른 재료를 추가하거나 초기화해 보세요! 😊"
             })
 
         chosen = results[click_count]

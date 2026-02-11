@@ -506,6 +506,11 @@
             menuData = {};
             patedFile = null;
             clickCount = 0; // 추천 클릭 횟수 추적
+
+            // 재료 입력이 바뀌면 추천 순서 리셋
+            document.getElementById('ingredients').oninput = () => {
+                clickCount = 0;
+            };
             fileInput.value = "";
 
             // UI 초기화
