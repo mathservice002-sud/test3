@@ -209,7 +209,7 @@
                 <div class="file-upload" id="dropzone">
                     <input type="file" id="fileInput" hidden accept="image/*">
                     <div style="font-size: 32px; margin-bottom: 10px;">📸</div>
-                    <p>사진을 선택하세요 (데모 작동)</p>
+                    <p>사진 선택 또는 <b>Ctrl + V</b> 붙여넣기</p>
                     <img id="preview" class="preview-img">
                 </div>
                 <button class="btn" id="btnAnalyze">🔍 급식표 분석하기</button>
@@ -235,6 +235,7 @@
         let selectedMenu = "";
         let menuData = {};
         let hasServerKey = false;
+        let patedFile = null;
 
         // 서버 설정 확인
         async function checkConfig() {
@@ -253,18 +254,39 @@
         const dropzone = document.getElementById('dropzone');
         const preview = document.getElementById('preview');
 
+        // 파일 선택 처리
         dropzone.onclick = () => fileInput.click();
         fileInput.onchange = () => {
             const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; };
-                reader.readAsDataURL(file);
-            }
+            if (file) handleImageFile(file);
         };
 
+        // Ctrl + V 붙여넣기 처리
+        window.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    patedFile = file; // 붙여넣은 파일 저장
+                    handleImageFile(file);
+                    break;
+                }
+            }
+        });
+
+        function handleImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
         document.getElementById('btnAnalyze').onclick = async () => {
-            if (!fileInput.files[0]) return alert('사진을 올려주세요!');
+            const file = fileInput.files[0] || patedFile;
+            if (!file) return alert('사진을 올려주거나 붙여넣어 주세요!');
+
             const btn = document.getElementById('btnAnalyze');
             const originalText = btn.innerText;
             btn.innerText = "⏳ 분석 중...";
