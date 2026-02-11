@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>급식 해결사 🍽️ | 오프라인 데모</title>
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E85A24;
+            --secondary: #F7C948;
+            --bg: #0F172A;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #F8FAFC;
+            --text-dim: #94A3B8;
+            --accent-green: #4ADE80;
+            --accent-purple: #A78BFA;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            /* 외부 폰트 대신 시스템 폰트 사용 (방화벽 대비) */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-badge {
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--primary);
+            padding: 0.2rem 0.8rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 1rem;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+        }
+
+        .recipe-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .menu-item {
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        .menu-item.active {
+            border: 1px solid var(--primary);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .loader {
+            display: none;
+            margin-right: 8px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: #ef4444;
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast" id="toast">오류가 발생했습니다!</div>
+
+    <div class="container">
+        <header>
+            <div class="logo-box">
+                <div class="logo-icon">🍴</div>
+                <h1>급식 해결사</h1>
+                <span id="demoBadge"
+                    style="display: none; background: #334155; color: #94A3B8; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;">DEMO</span>
+            </div>
+            <p>방화벽/프록시 환경에서도 작동하는 오프라인 데모 모드</p>
+        </header>
+
+        <div class="app-grid">
+            <div class="glass-card">
+                <div class="card-header">
+                    <span class="step-badge">스텝 1</span>
+                    <h3>급식표 분석</h3>
+                </div>
+                <div class="file-upload" id="dropzone">
+                    <input type="file" id="fileInput" hidden accept="image/*">
+                    <div style="font-size: 32px; margin-bottom: 10px;">📸</div>
+                    <p>사진을 선택하세요 (데모 작동)</p>
+                    <img id="preview" class="preview-img">
+                </div>
+                <button class="btn" id="btnAnalyze">🔍 급식표 분석하기</button>
+                <div id="menuList" style="margin-top: 1rem;"></div>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header">
+                    <span class="step-badge">스텝 2</span>
+                    <h3>재료 및 추천</h3>
+                </div>
+                <textarea id="ingredients" rows="5" placeholder="재료 입력..."></textarea>
+                <button class="btn" id="btnRecommend" disabled>✨ 저녁 메뉴 추천받기</button>
+                <div id="resultArea" style="display: none; margin-top: 1.5rem;">
+                    <div style="color: var(--accent-green); font-weight: bold; margin-bottom: 1rem;">🍳 오늘의 추천 결과:</div>
+                    <div id="recipeGrid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedMenu = "";
+        let menuData = {};
+        let hasServerKey = false;
+
+        // 서버 설정 확인
+        async function checkConfig() {
+            try {
+                const res = await fetch('/api/config');
+                const data = await res.json();
+                hasServerKey = data.hasServerKey;
+                if (!hasServerKey) document.getElementById('demoBadge').style.display = 'inline-block';
+            } catch (e) {
+                document.getElementById('demoBadge').style.display = 'inline-block';
+            }
+        }
+        checkConfig();
+
+        const fileInput = document.getElementById('fileInput');
+        const dropzone = document.getElementById('dropzone');
+        const preview = document.getElementById('preview');
+
+        dropzone.onclick = () => fileInput.click();
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => { preview.src = e.target.result; preview.style.display = 'block'; };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        document.getElementById('btnAnalyze').onclick = async () => {
+            if (!fileInput.files[0]) return alert('사진을 올려주세요!');
+            const btn = document.getElementById('btnAnalyze');
+            const originalText = btn.innerText;
+            btn.innerText = "⏳ 분석 중...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: preview.src })
+                });
+                menuData = await res.json();
+                renderMenuList();
+                document.getElementById('btnRecommend').disabled = false;
+            } catch (e) {
+                alert('연결 오류: 방화벽 설정을 확인하세요.');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        };
+
+        function renderMenuList() {
+            const list = document.getElementById('menuList');
+            list.innerHTML = '<b>날짜 선택:</b><br>';
+            Object.keys(menuData).forEach(date => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `<b>${date}</b>: ${menuData[date]}`;
+                div.onclick = () => {
+                    document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+                    div.classList.add('active');
+                    selectedMenu = menuData[date];
+                };
+                list.appendChild(div);
+            });
+            if (list.querySelector('.menu-item')) list.querySelector('.menu-item').click();
+        }
+
+        document.getElementById('btnRecommend').onclick = async () => {
+            const btn = document.getElementById('btnRecommend');
+            btn.disabled = true;
+            btn.innerText = "⏳ 고민 중...";
+
+            try {
+                const res = await fetch('/api/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lunch: selectedMenu, ingredients: document.getElementById('ingredients').value })
+                });
+                const data = await res.json();
+                renderResults(data);
+            } catch (e) {
+                alert('오류 발생');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "✨ 저녁 메뉴 추천받기";
+            }
+        };
+
+        function renderResults(data) {
+            document.getElementById('resultArea').style.display = 'block';
+            const grid = document.getElementById('recipeGrid');
+            grid.innerHTML = `<p style="margin-bottom:1rem; color:var(--text-dim);">${data.analysis}</p>`;
+            data.recipes.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'recipe-card';
+                card.innerHTML = `
+                    <div style="font-size:1.2rem; font-weight:bold; color:var(--accent-green);">${r.name}</div>
+                    <p style="font-size:0.9rem; color:var(--text-dim);">${r.desc}</p>
+                    <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--secondary);">⏱ ${r.time}분 | ${r.diff}</div>
+                `;
+                grid.appendChild(card);
+            });
+            grid.innerHTML += `<div style="margin-top:2rem; padding:1rem; border-radius:10px; background:rgba(167,139,250,0.1); color:var(--accent-purple); font-style:italic;">${data.message}</div>`;
+            document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+
+</html>
