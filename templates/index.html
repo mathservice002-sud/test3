@@ -7,24 +7,25 @@
     <title>급식 해결사! 저녁 메뉴 고민 끝! 🍽️</title>
     <style>
         :root {
-            --primary: #FF6B35;
-            --primary-dark: #E85A24;
-            --secondary: #F7C948;
-            --bg: #0F172A;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-            --text-main: #F8FAFC;
-            --text-dim: #94A3B8;
-            --accent-green: #4ADE80;
-            --accent-purple: #A78BFA;
+            --primary: #FF8E53;
+            --primary-light: #FFAB81;
+            --primary-dark: #E6763D;
+            --secondary: #6BCB77;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --header-bg: linear-gradient(135deg, #FF8E53 0%, #FF6B6B 100%);
+            --border: #E2E8F0;
+            --text-main: #1E293B;
+            --text-dim: #64748B;
+            --accent-mint: #4D96FF;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* 외부 폰트 대신 시스템 폰트 사용 (방화벽 대비) */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         body {
@@ -34,15 +35,20 @@
             min-height: 100vh;
         }
 
+        .header-section {
+            background: var(--header-bg);
+            padding: 4rem 1rem 6rem;
+            color: white;
+            text-align: center;
+            border-bottom-left-radius: 50px;
+            border-bottom-right-radius: 50px;
+            margin-bottom: -3rem;
+        }
+
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
+            padding: 0 1rem 4rem;
         }
 
         .logo-box {
@@ -52,27 +58,24 @@
             margin-bottom: 1rem;
         }
 
-        .logo-icon {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-
         h1 {
             font-size: 2.5rem;
-            font-weight: 900;
-            color: #fff;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 500;
         }
 
         .app-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2rem;
+            position: relative;
         }
 
         @media (max-width: 768px) {
@@ -83,82 +86,111 @@
 
         .glass-card {
             background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2rem;
+            border: 1px solid white;
+            border-radius: 30px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
         }
 
         .card-header {
             display: flex;
             align-items: center;
             gap: 0.8rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .step-badge {
-            background: rgba(255, 107, 53, 0.1);
+            background: #FFF0E6;
             color: var(--primary);
-            padding: 0.2rem 0.8rem;
+            padding: 0.3rem 0.9rem;
             border-radius: 50px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 700;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            color: var(--text-main);
         }
 
         input,
         textarea {
             width: 100%;
-            background: rgba(15, 23, 42, 0.5);
+            background: #F1F5F9;
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 0.8rem 1rem;
-            color: #fff;
-            margin-bottom: 1rem;
+            border-radius: 16px;
+            padding: 1rem 1.2rem;
+            color: var(--text-main);
+            margin-bottom: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(255, 142, 83, 0.1);
         }
 
         .file-upload {
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            padding: 2rem;
+            border: 2px dashed #CBD5E1;
+            border-radius: 20px;
+            padding: 2.5rem;
             text-align: center;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.02);
-            margin-bottom: 1rem;
+            background: #F8FAFC;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: #FFF9F5;
         }
 
         .preview-img {
             max-width: 100%;
-            border-radius: 12px;
+            border-radius: 16px;
             margin-top: 1rem;
             display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .btn {
             width: 100%;
-            padding: 1rem;
-            border-radius: 12px;
+            padding: 1.2rem;
+            border-radius: 16px;
             font-weight: 700;
             cursor: pointer;
             border: none;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: var(--primary);
             color: white;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 15px rgba(255, 142, 83, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 142, 83, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn:disabled {
-            opacity: 0.5;
-        }
-
-        .recipe-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 1.5rem;
-            margin-top: 1rem;
+            background: #CBD5E1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .menu-picker {
-            max-height: 240px;
+            max-height: 280px;
             overflow-y: auto;
-            margin-top: 1rem;
+            margin-top: 1.5rem;
             padding-right: 0.5rem;
         }
 
@@ -167,48 +199,112 @@
         }
 
         .menu-picker::-webkit-scrollbar-thumb {
-            background: var(--border);
+            background: #E2E8F0;
             border-radius: 10px;
         }
 
         .menu-item {
-            padding: 0.8rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            margin-bottom: 0.6rem;
+            padding: 1.2rem;
+            background: #F8FAFC;
+            border-radius: 16px;
+            margin-bottom: 0.8rem;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid transparent;
+            border: 2px solid transparent;
         }
 
         .menu-item:hover {
-            background: rgba(255, 255, 255, 0.07);
+            background: #F1F5F9;
         }
 
         .menu-item.active {
-            border: 1px solid var(--primary);
-            background: rgba(255, 107, 53, 0.1);
+            border-color: var(--primary);
+            background: #FFF9F5;
+        }
+
+        .recipe-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         }
 
         .recipe-img {
             width: 100%;
-            height: 150px;
+            height: 200px;
             object-fit: cover;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            background: #1e293b;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            background: #E2E8F0;
+        }
+
+        .recipe-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
         }
 
         .step-list {
-            margin-top: 1rem;
-            padding-left: 1.2rem;
-            font-size: 0.9rem;
-            color: var(--text-dim);
+            margin: 1.5rem 0;
+            padding-left: 1.5rem;
+            font-size: 1rem;
+            color: var(--text-main);
         }
 
-        .loader {
-            display: none;
-            margin-right: 8px;
+        .step-list li {
+            margin-bottom: 0.8rem;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            padding: 0.3rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .tag-time {
+            background: #E0F2FE;
+            color: #0369A1;
+        }
+
+        .tag-diff {
+            background: #F0FDF4;
+            color: #166534;
+        }
+
+        .tag-ingred {
+            background: #F1F5F9;
+            color: #475569;
+        }
+
+        .tip-box {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            background: #FFFBEB;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            color: #92400E;
+            display: flex;
+            gap: 0.8rem;
+        }
+
+        .memo-box {
+            margin-top: 3rem;
+            padding: 2rem;
+            border-radius: 24px;
+            background: #F0F9FF;
+            border: 1px solid #BAE6FD;
+            text-align: center;
         }
 
         .toast {
@@ -220,6 +316,17 @@
             padding: 1rem;
             border-radius: 12px;
             display: none;
+            z-index: 1000;
+        }
+
+        #demoBadge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -227,42 +334,45 @@
 <body>
     <div class="toast" id="toast">오류가 발생했습니다!</div>
 
-    <div class="container">
-        <header>
-            <div class="logo-box">
-                <div class="logo-icon">🍴</div>
-                <h1>급식 해결사! 저녁 메뉴 고민 끝!</h1>
-                <span id="demoBadge"
-                    style="display: none; background: #334155; color: #94A3B8; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;">DEMO</span>
-            </div>
-            <p>AI가 지켜주는 워킹맘의 자존심, 급식 중복 차단 봇</p>
-        </header>
+    <div class="header-section">
+        <div class="logo-box">
+            <h1>급식 해결사! 🍽️</h1>
+            <span id="demoBadge" style="display: none;">DEMO MODE</span>
+        </div>
+        <div class="subtitle">AI가 지켜주는 워킹맘의 자존심, 급식 중복 차단 봇</div>
+    </div>
 
+    <div class="container">
         <div class="app-grid">
             <div class="glass-card">
                 <div class="card-header">
-                    <span class="step-badge">스텝 1</span>
-                    <h3>급식표 분석</h3>
+                    <span class="step-badge">1단계</span>
+                    <h3>오늘 학교에서 뭐 먹었지?</h3>
                 </div>
                 <div class="file-upload" id="dropzone">
                     <input type="file" id="fileInput" hidden accept="image/*">
-                    <div style="font-size: 32px; margin-bottom: 10px;">📸</div>
-                    <p>사진 선택 또는 <b>Ctrl + V</b> 붙여넣기</p>
+                    <div style="font-size: 48px; margin-bottom: 10px;">📸</div>
+                    <p style="color: var(--text-dim);">급식표 사진을 올리거나 붙여넣으세요</p>
                     <img id="preview" class="preview-img">
                 </div>
-                <button class="btn" id="btnAnalyze">🔍 급식표 분석하기</button>
+                <button class="btn" id="btnAnalyze">자동 분석 시작</button>
                 <div id="menuList" class="menu-picker"></div>
             </div>
 
             <div class="glass-card">
                 <div class="card-header">
-                    <span class="step-badge">스텝 2</span>
-                    <h3>재료 및 추천</h3>
+                    <span class="step-badge">2단계</span>
+                    <h3>냉장고엔 무엇이 있을까요?</h3>
                 </div>
-                <textarea id="ingredients" rows="5" placeholder="재료 입력..."></textarea>
-                <button class="btn" id="btnRecommend" disabled>✨ 저녁 메뉴 추천받기</button>
-                <div id="resultArea" style="display: none; margin-top: 1.5rem;">
-                    <div style="color: var(--accent-green); font-weight: bold; margin-bottom: 1rem;">🍳 오늘의 추천 결과:</div>
+                <textarea id="ingredients" rows="5" placeholder="재료를 쉼표로 구분해 입력하세요 (예: 감자, 양파, 계란)"></textarea>
+                <button class="btn" id="btnRecommend" disabled
+                    style="background: var(--secondary); box-shadow: 0 4px 15px rgba(107, 203, 119, 0.3);">저녁 메뉴
+                    추천받기</button>
+                <div id="resultArea" style="display: none; margin-top: 2rem;">
+                    <div
+                        style="color: var(--primary-dark); font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>✨</span> 오늘의 저녁 처방전
+                    </div>
                     <div id="recipeGrid"></div>
                 </div>
             </div>
@@ -275,7 +385,6 @@
         let hasServerKey = false;
         let patedFile = null;
 
-        // 서버 설정 확인
         async function checkConfig() {
             try {
                 const res = await fetch('/api/config');
@@ -292,20 +401,18 @@
         const dropzone = document.getElementById('dropzone');
         const preview = document.getElementById('preview');
 
-        // 파일 선택 처리
         dropzone.onclick = () => fileInput.click();
         fileInput.onchange = () => {
             const file = fileInput.files[0];
             if (file) handleImageFile(file);
         };
 
-        // Ctrl + V 붙여넣기 처리
         window.addEventListener('paste', (e) => {
             const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
                     const file = items[i].getAsFile();
-                    patedFile = file; // 붙여넣은 파일 저장
+                    patedFile = file;
                     handleImageFile(file);
                     break;
                 }
@@ -323,11 +430,11 @@
 
         document.getElementById('btnAnalyze').onclick = async () => {
             const file = fileInput.files[0] || patedFile;
-            if (!file) return alert('사진을 올려주거나 붙여넣어 주세요!');
+            if (!file) return alert('먼저 사진을 등록해 주세요!');
 
             const btn = document.getElementById('btnAnalyze');
             const originalText = btn.innerText;
-            btn.innerText = "⏳ 분석 중...";
+            btn.innerText = "⏳ 꼼꼼하게 읽는 중...";
             btn.disabled = true;
 
             try {
@@ -340,7 +447,7 @@
                 renderMenuList();
                 document.getElementById('btnRecommend').disabled = false;
             } catch (e) {
-                alert('연결 오류: 방화벽 설정을 확인하세요.');
+                alert('연결 오류가 발생했습니다.');
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -349,11 +456,11 @@
 
         function renderMenuList() {
             const list = document.getElementById('menuList');
-            list.innerHTML = '<b style="font-size:0.9rem; color:var(--text-dim);">📅 날짜를 선택해 주세요 (스크롤 가능):</b><br><br>';
+            list.innerHTML = '<b style="font-size:0.9rem; color:var(--text-dim); margin-bottom: 1rem; display: block;">📅 날짜를 선택해 주세요:</b>';
             Object.keys(menuData).forEach(date => {
                 const div = document.createElement('div');
                 div.className = 'menu-item';
-                div.innerHTML = `<div><b>${date}</b></div><div style="font-size:0.85rem; color:var(--text-dim); margin-top:2px;">${menuData[date]}</div>`;
+                div.innerHTML = `<div><b style="color:var(--primary-dark);">${date}</b></div><div style="font-size:0.9rem; color:var(--text-main); margin-top:4px;">${menuData[date]}</div>`;
                 div.onclick = () => {
                     document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                     div.classList.add('active');
@@ -361,13 +468,13 @@
                 };
                 list.appendChild(div);
             });
-            if (list.querySelector('.menu-item')) list.querySelector('.menu-item').click();
+            if (list.querySelectorAll('.menu-item').length > 0) list.querySelectorAll('.menu-item')[0].click();
         }
 
         document.getElementById('btnRecommend').onclick = async () => {
             const btn = document.getElementById('btnRecommend');
             btn.disabled = true;
-            btn.innerText = "⏳ 고민 중...";
+            btn.innerText = "⏳ 맛있는 메뉴 찾는 중...";
 
             try {
                 const res = await fetch('/api/recommend', {
@@ -378,47 +485,54 @@
                 const data = await res.json();
                 renderResults(data);
             } catch (e) {
-                alert('오류 발생');
+                alert('추천 중 오류가 발생했습니다.');
             } finally {
                 btn.disabled = false;
-                btn.innerText = "✨ 저녁 메뉴 추천받기";
+                btn.innerText = "저녁 메뉴 추천받기";
             }
         };
 
         function renderResults(data) {
             document.getElementById('resultArea').style.display = 'block';
             const grid = document.getElementById('recipeGrid');
-            grid.innerHTML = `<p style="margin-bottom:1.5rem; color:var(--text-dim); background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px;">${data.analysis}</p>`;
+            grid.innerHTML = `<div style="margin-bottom:1.5rem; color:var(--text-dim); background: #fff; padding:1.2rem; border-radius:16px; border: 1px solid var(--border); font-size: 0.95rem;">${data.analysis}</div>`;
 
             data.recipes.forEach(r => {
                 const card = document.createElement('div');
                 card.className = 'recipe-card';
 
-                // 이미지 키워드 추출 (간단한 매칭)
                 let imgKeyword = "cooking";
                 if (r.name.includes("감자")) imgKeyword = "potato";
                 if (r.name.includes("국")) imgKeyword = "soup";
                 if (r.name.includes("볶음")) imgKeyword = "stir-fry";
                 if (r.name.includes("떡볶이")) imgKeyword = "topokki";
                 if (r.name.includes("샌드위치")) imgKeyword = "sandwich";
+                if (r.name.includes("고기")) imgKeyword = "meat";
 
-                const stepsHtml = r.steps ? `<ul class="step-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ul>` : "";
-                const ingredientsHtml = r.ingredients ? `<p style="font-size:0.8rem; margin-top:0.5rem; color:var(--text-dim);">🥕 재료: ${r.ingredients.join(', ')}</p>` : "";
+                const stepsHtml = r.steps ? `<ol class="step-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>` : "";
 
                 card.innerHTML = `
-                    <img src="https://source.unsplash.com/400x300/?${imgKeyword},food" class="recipe-img" alt="${r.name}">
-                    <div style="font-size:1.3rem; font-weight:bold; color:var(--accent-green);">${r.name}</div>
-                    <p style="font-size:0.95rem; color:var(--text-dim); margin-top:0.3rem;">${r.desc}</p>
-                    <div style="margin-top:0.8rem; font-size:0.85rem; color:var(--secondary); font-weight:bold;">⏱️ 소요시간: ${r.time}분 | 난이도: ${r.diff}</div>
-                    ${ingredientsHtml}
+                    <img src="https://source.unsplash.com/featured/800x600/?${imgKeyword},koreanfood" class="recipe-img" alt="${r.name}">
+                    <div class="badge-row">
+                        <span class="tag tag-time">⏱️ ${r.time}분</span>
+                        <span class="tag tag-diff">난이도: ${r.diff}</span>
+                    </div>
+                    <div class="recipe-title">${r.name}</div>
+                    <p style="font-size:1rem; color:var(--text-dim);">${r.desc}</p>
+                    <div style="margin-top:1.2rem;">
+                        <span class="tag tag-ingred">🥕 주재료: ${r.ingredients.join(', ')}</span>
+                    </div>
                     ${stepsHtml}
-                    <div style="margin-top:1rem; padding:0.8rem; background:rgba(247,201,72,0.1); border-radius:10px; font-size:0.85rem; color:var(--secondary);">💡 꿀팁: ${r.tip}</div>
+                    <div class="tip-box">
+                        <span style="font-size: 1.2rem;">💡</span>
+                        <div><b>전문가의 팁:</b> ${r.tip}</div>
+                    </div>
                 `;
                 grid.appendChild(card);
             });
-            grid.innerHTML += `<div style="margin-top:2.5rem; padding:1.5rem; border-radius:20px; background:linear-gradient(135deg, rgba(167,139,250,0.2), rgba(255,107,53,0.1)); border:1px solid rgba(167,139,250,0.3); color:var(--text-main); line-height:1.7; text-align:center;">
-                <div style="font-size:2rem; margin-bottom:0.5rem;">💌</div>
-                <div style="font-style:italic;">${data.message}</div>
+            grid.innerHTML += `<div class="memo-box">
+                <div style="font-size:2.5rem; margin-bottom:1rem;">👩‍🍳</div>
+                <div style="font-size:1.1rem; color:var(--text-main); font-weight: 500; line-height:1.7;">${data.message}</div>
             </div>`;
             document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth' });
         }
