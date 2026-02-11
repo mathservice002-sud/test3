@@ -114,7 +114,7 @@ def api_recommend():
                 "desc": "양념이 잘 밴 무가 일품인 밥도둑 조림",
                 "time": "30", "diff": "보통",
                 "steps": ["무를 깔고 고등어를 올린 뒤 양념장 투하", "중불에서 국물이 자작할 때까지 졸인다"],
-                "tip": "무를 먼저 살짝 익히면 더 맛있어요",
+                "tip": "무를 먼저 살짝 익히면 더 맛있어요지",
                 "message": "시원한 무와 고소한 고등어, 오늘 저녁 최고의 선택입니다! 🐟"
             },
             {
@@ -125,7 +125,7 @@ def api_recommend():
                 "time": "15", "diff": "쉬움",
                 "steps": ["고등어에 소금 밑간을 한다", "팬이나 에어프라이어에 노릇하게 굽는다"],
                 "tip": "밀가루를 살짝 묻히면 더 바삭해요",
-                "message": "고소한 냄새가 온 집안에 솔솔~ 맛있는 식사 되세요! ✨"
+                "message": "고송한 냄새가 온 집안에 솔솔~ 맛있는 식사 되세요! ✨"
             },
             {
                 "name": "소고기 뭇국",
@@ -134,7 +134,7 @@ def api_recommend():
                 "desc": "언제 먹어도 속이 편안하고 든든한 한국인의 소울푸드",
                 "time": "25", "diff": "보통",
                 "steps": ["참기름에 소고기와 무를 볶는다", "물을 붓고 거품을 걷어내며 푹 끓인다"],
-                "tip": "무를 얇게 썰어야 국물이 빨리 우러나요",
+                "tip": "무를 얇게 썰야 국물이 빨리 우러나요",
                 "message": "따뜻한 국물 한 그릇에 오늘 하루의 고단함도 녹아내리길.. 🍲"
             },
             {
@@ -158,7 +158,7 @@ def api_recommend():
                 "message": "간단하지만 영양 만점, 당신의 정성이 듬뿍 담겼네요! 🍳"
             },
             {
-                "name": "감자채 볶음",
+                "name": "포슬포슬 감자채 볶음",
                 "ingredients": ["감자", "양파", "햄", "파프리카"],
                 "analysis": "아삭하고 고소한 감자채 볶음으로 밥상을 채워보세요.",
                 "desc": "남녀노소 누구나 좋아하는 국민 밑반찬",
@@ -166,6 +166,36 @@ def api_recommend():
                 "steps": ["감자를 채 썰어 전분기를 뺀 뒤 볶는다", "양파와 햄을 넣고 소금으로 간한다"],
                 "tip": "감자를 먼저 살짝 데치면 볶을 때 부서지지 않아요",
                 "message": "아삭아삭 씹히는 맛이 예술! 오늘도 고생 많으셨습니다! 🥔"
+            },
+            {
+                "name": "부드러운 계란찜",
+                "ingredients": ["계란", "파", "당근", "우유"],
+                "analysis": "속이 편안해지는 따뜻하고 부드러운 계란찜입니다.",
+                "desc": "아이들 식사에 빠질 수 없는 단골 메뉴",
+                "time": "10", "diff": "매우 쉬움",
+                "steps": ["계란을 잘 풀고 한 번 체에 거른다", "중불에서 김이 오를 때까지 쪄낸다"],
+                "tip": "우유를 조금 넣으면 훨씬 고소하고 부드러워요",
+                "message": "부들부들한 식감처럼 기분 좋은 저녁 되세요! 💛"
+            },
+            {
+                "name": "두부 김치 덮밥",
+                "ingredients": ["두부", "김치", "돼지고기", "양파"],
+                "analysis": "매콤한 김치와 담백한 두부의 조화! 입맛 돋우는 덮밥입니다.",
+                "desc": "별다른 반찬 없이 한 그릇으로 뚝딱 해결하는 식사",
+                "time": "20", "diff": "보통",
+                "steps": ["김치와 고기를 볶다가 두부를 깍둑썰어 넣는다", "밥 위에 듬뿍 올려 비벼 먹는다"],
+                "tip": "설탕을 반 스푼 넣으면 김치의 신맛을 잡을 수 있어요",
+                "message": "매콤 담백한 조화가 일품! 든든하게 드시고 힘내세요! 🔥"
+            },
+            {
+                "name": "알록달록 파프리카 볶음",
+                "ingredients": ["파프리카", "소시지", "양파", "굴소스"],
+                "analysis": "색감이 예뻐 아이들도 흥미를 갖는 달콤한 채소 볶음입니다.",
+                "desc": "파프리카의 아삭함과 소시지의 짭짤함이 만난 반찬",
+                "time": "10", "diff": "쉬움",
+                "steps": ["파프리카와 소시지를 한입 크기로 썬다", "강한 불에 빠르게 볶아 아삭함을 살린다"],
+                "tip": "마지막에 올리고당을 살짝 넣으면 윤기가 나요",
+                "message": "비주얼도 맛도 만점! 즐거운 식사 시간 되세요! 🌈"
             },
             {
                 "name": "아삭 무생채",
@@ -182,27 +212,36 @@ def api_recommend():
         click_count = data.get('clickCount', 0)
         ing_list = [i.strip() for i in ingredients.replace(',', ' ').split() if i.strip()]
         
-        # 매칭 알고리즘: 사용자가 입력한 재료가 포함된 레시피 찾기
+        # 1. 매칭 알고리즘: 사용자가 입력한 재료가 포함된 레시피 찾기
         matches = []
-        for r in RECIPE_LIBRARY:
-            score = sum(1 for ing in ing_list if ing in r['ingredients'] or ing in r['name'])
-            if score > 0:
-                matches.append((score, r))
-        
-        # 점수 높은 순으로 정렬
-        matches.sort(key=lambda x: x[0], reverse=True)
-        results = [m[1] for m in matches]
-        
-        # 만약 매칭되는 게 없거나 재료가 없으면 전체 라이브러리에서 추천
-        if not results:
-            results = RECIPE_LIBRARY.copy()
-            random.shuffle(results)
+        if ing_list:
+            for r in RECIPE_LIBRARY:
+                # 사용자가 입력한 재료 중 하나라도 레시피 재료나 이름에 포함되면 매칭
+                score = sum(1 for user_ing in ing_list if any(user_ing in ri for ri in r['ingredients']) or user_ing in r['name'])
+                if score > 0:
+                    matches.append((score, r))
             
+            # 매칭된 결과 점수순 정렬
+            matches.sort(key=lambda x: x[0], reverse=True)
+            results = [m[1] for m in matches]
+        else:
+            # 입력 재료가 아예 없으면 전체 라이브러리 (기본 순서)
+            results = RECIPE_LIBRARY.copy()
+        
+        # 2. 결과가 없는 경우 처리
+        if not results and ing_list: # ing_list가 있는데 결과가 없는 경우
+            return jsonify({
+                "analysis": f"입력하신 재료({', '.join(ing_list)})로 만들 수 있는 메뉴를 데모 모드에서 찾지 못했습니다.",
+                "recipes": [],
+                "message": "데모 모드에서는 '고등어', '무', '소고기', '떡', '두부', '계란', '감자', '파프리카' 위주로 준비되어 있어요. 실제 AI 버전은 모든 재료를 분석해 드립니다! 🍀"
+            })
+            
+        # 3. 모든 결과 소진 시 처리
         if click_count >= len(results):
             return jsonify({
-                "analysis": "현재 준비된 모든 레시피를 보셨습니다!",
+                "analysis": "현재 준비된 모든 관련 레시피를 보셨습니다!",
                 "recipes": [],
-                "message": "데모 데이터베이스에 등록된 실존 메뉴 중에서는 더 이상 추천할 메뉴가 없습니다. 초기화 후 다시 시도해 주세요! 😊"
+                "message": "입력하신 재료와 관련된 실존 메뉴 추천이 모두 끝났습니다. 다른 재료를 입력하거나 초기화해 보세요! 😊"
             })
 
         chosen = results[click_count]
