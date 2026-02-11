@@ -4,3 +4,4 @@ openai
 python-dotenv
 Pillow
 google-cloud-vision
+google-generativeai

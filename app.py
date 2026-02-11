@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
+import google.generativeai as genai
 from google.cloud import vision
 
 # 환경 변수 로드
@@ -15,14 +16,20 @@ app = Flask(__name__)
 CORS(app)
 
 def get_client(api_key=None):
-    """API 클라이언트 생성 (실제 AI 모드 전용)"""
+    """API 클라이언트 생성 (OpenAI sk- 또는 Google AIza- 지원)"""
     key = api_key if api_key and api_key.strip() else os.getenv("OPENAI_API_KEY")
-    if key and len(str(key)) > 5:
-        try:
-            return OpenAI(api_key=str(key).strip())
-        except Exception as e:
-            print(f"Client Init Error: {e}")
-            return None
+    if not key or len(str(key)) < 5:
+        return None
+    
+    key = str(key).strip()
+    try:
+        if key.startswith("sk-"):
+            return {"type": "openai", "client": OpenAI(api_key=key)}
+        elif key.startswith("AIza"):
+            genai.configure(api_key=key)
+            return {"type": "gemini", "client": genai.GenerativeModel('gemini-1.5-flash')}
+    except Exception as e:
+        print(f"Client Init Error: {e}")
     return None
 
 def extract_menu_google_vision(image_b64):
@@ -38,49 +45,46 @@ def extract_menu_google_vision(image_b64):
         print(f"Google Vision Error: {e}")
         return None
 
-def extract_menu_from_image(openai_client, image_b64):
+def extract_menu_from_image(ai_client, image_b64):
     """이미지 분석 (Google OCR + AI 정리)"""
     raw_text = extract_menu_google_vision(image_b64)
     
-    # 1. 공통 텍스트 검증 로직 (전처리)
+    # 1. 공통 텍스트 검증 로직
     if raw_text:
         non_menu_keywords = ["구하시오", "정답", "문제", "수학", "계산", "풀이"]
         menu_keywords = ["식단", "급식", "메뉴", "반찬", "밥", "우유", "칼로리", "영양", "초등학교", "중학교", "고등학교"]
-        
-        # 부정 키워드 발견 시 즉시 차단
         if any(k in raw_text for k in non_menu_keywords):
             return {"error": "급식표가 아닌 이미지가 감지되었습니다. (수학 문제 등으로 판독됨)"}
-        
-        # 긍정 키워드가 너무 없으면 의심 (텍스트가 일정 이상일 때만 수행)
         if len(raw_text) > 20 and not any(k in raw_text for k in menu_keywords):
              return {"error": "급식표로 보기 어려운 이미지입니다. 식단표를 다시 확인해 주세요."}
 
-    # 2. 프롬프트 구성 (AI용 지시사항 강화)
-    valid_instruction = "먼저 이 이미지가 학교 급식표(식단표)가 맞는지 판단해줘. 만약 급식표가 아니거나 음식 관련 내용이 없다면 반드시 {\"error\": \"이미지 판독 불가 메시지\"} 형식으로만 응답해줘. 급식표가 맞다면 날짜별 메뉴를 JSON으로 정리해줘."
-    if raw_text:
-        prompt = f"{valid_instruction}\n날짜: MM/DD(요일)\n텍스트: {raw_text}\n결과는 ```json ... ``` 블록에 넣어줘."
-    else:
-        prompt = f"{valid_instruction} 결과를 ```json ... ``` 블록에 넣어줘."
+    # 2. 프롬프트 구성
+    valid_instruction = "이 이미지가 학교 급식표(식단표)가 맞는지 판단하고, 맞다면 날짜별 메뉴를 JSON으로 정리해줘. 급식표가 아니면 {\"error\": \"판독 불가\"} 응답해줘."
+    prompt = f"{valid_instruction}\n텍스트: {raw_text}\n결과는 ```json ... ``` 블록에 넣어줘." if raw_text else f"{valid_instruction} 결과를 ```json ... ``` 블록에 넣어줘."
 
-    messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
-    if not raw_text:
-        messages[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
-
-    # 3. 실제 AI 분석 (GPT-4o-mini)
-    if not openai_client:
-        return {"error": "실제 AI 버전을 사용하려면 유효한 OpenAI API 키가 필요합니다."}
+    # 3. 실제 AI 분석
+    if not ai_client:
+        return {"error": "실제 AI 버전을 사용하려면 유효한 API 키(OpenAI 또는 Google)가 필요합니다."}
 
     try:
-        response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
-        raw = response.choices[0].message.content
+        if ai_client["type"] == "openai":
+            messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
+            if not raw_text:
+                messages[0]["content"].append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_b64}"}})
+            response = ai_client["client"].chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
+            raw = response.choices[0].message.content
+        else: # Gemini
+            if not raw_text:
+                response = ai_client["client"].generate_content([prompt, {"mime_type": "image/jpeg", "data": base64.b64decode(image_b64)}])
+            else:
+                response = ai_client["client"].generate_content(prompt)
+            raw = response.text
+
         match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
         result = json.loads(match.group(1)) if match else {}
-        
-        if "error" in result:
-            return result
         return result
     except Exception as e:
-        print(f"OpenAI API Error: {e}")
+        print(f"AI API Error: {e}")
         return {"error": f"AI 분석 중 오류가 발생했습니다. 키를 확인해 주세요. ({str(e)})"}
 
 @app.route('/')
@@ -107,30 +111,38 @@ def api_recommend():
     data = request.json
     lunch = data.get('lunch', '')
     ingredients = data.get('ingredients', '')
-    openai_client = get_client(data.get('apiKey'))
+    ai_client = get_client(data.get('apiKey'))
     
-    if not openai_client:
+    if not ai_client:
         return jsonify({
-            "analysis": "실제 AI 버전을 위해 API 키가 필요합니다.",
+            "analysis": "실제 AI 버전을 위해 올바른 API 키가 필요합니다.",
             "recipes": [],
-            "message": "설정에서 유효한 OpenAI API 키를 입력해 주세요."
+            "message": "설정에서 유효한 OpenAI(sk-) 또는 Google(AIza) 키를 입력해 주세요."
         })
 
     # 실제 AI 추천 로직
     try:
         prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}. 점심과 겹치지 않는 저녁 메뉴 1개와 레시피, 그리고 지친 부모님을 위한 맞춤형 응원 멘트를 JSON으로 작성해줘."""
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "공감 능력이 뛰어난 요리 전문가입니다."}, {"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
-        )
-        return jsonify(json.loads(response.choices[0].message.content))
+        if ai_client["type"] == "openai":
+            response = ai_client["client"].chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": "공감 능력이 뛰어난 요리 전문가입니다."}, {"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+            res_content = response.choices[0].message.content
+        else: # Gemini
+            response = ai_client["client"].generate_content(prompt + " 응답은 반드시 순수 JSON 객체로 해줘.")
+            res_content = response.text
+            # Gemini는 가끔 ```json ... ```를 붙이므로 제거
+            res_content = re.sub(r'```json\s*|\s*```', '', res_content, flags=re.DOTALL)
+
+        return jsonify(json.loads(res_content))
     except Exception as e:
-        print(f"OpenAI Recommendation Error: {e}")
+        print(f"AI Recommendation Error: {e}")
         return jsonify({
-            "analysis": "AI 추천 서버와 연결할 수 없습니다.",
+            "analysis": "AI 추천 중 오류가 발생했습니다.",
             "recipes": [],
-            "message": f"API 키 오류가 발생했습니다: {str(e)}"
+            "message": f"API 오류: {str(e)}"
         })
 
 if __name__ == '__main__':
