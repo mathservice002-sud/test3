@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 # 환경 변수 로드
 load_dotenv()
 
-app = Flask(__name__)
+# Vercel 환경에서 루트의 templates 폴더를 찾을 수 있도록 경로 설정
+app = Flask(__name__, template_folder='../templates')
 CORS(app)
 
 # ──────────────────────────────────────────────
