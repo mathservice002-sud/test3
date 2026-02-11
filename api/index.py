@@ -17,14 +17,15 @@ app = Flask(__name__, template_folder=template_dir)
 CORS(app)
 
 def get_client(api_key=None):
-    """OpenAI 클라이언트 반환 (키 형식 검증)"""
+    """API 클라이언트 생성 (키가 있으면 실제 AI 모드)"""
     key = api_key if api_key and api_key.strip() else os.getenv("OPENAI_API_KEY")
-    if not key or not str(key).startswith("sk-") or key == "sk-your-api-key-here":
-        return None
-    try:
-        return OpenAI(api_key=key)
-    except:
-        return None
+    # 키가 존재하고 길이가 어느 정도 되면 실제 AI 모드로 진입
+    if key and len(str(key)) > 5:
+        try:
+            return OpenAI(api_key=str(key).strip())
+        except:
+            return None
+    return None
 
 def extract_menu_google_vision(image_b64):
     """Google Cloud Vision OCR (구글 프로젝트 ID 기반)"""
@@ -78,10 +79,15 @@ def extract_menu_from_image(openai_client, image_b64):
             mock_data[date_str] = samples[i % len(samples)]
         return mock_data
 
-    response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
-    raw = response.choices[0].message.content
-    match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
-    return json.loads(match.group(1)) if match else {}
+    # 4. 실제 AI 분석 (GPT-4o-mini)
+    try:
+        response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
+        raw = response.choices[0].message.content
+        match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
+        return json.loads(match.group(1)) if match else {}
+    except Exception as e:
+        print(f"OpenAI API Error: {e}")
+        return {"error": f"AI 분석 중 오류가 발생했습니다. 키를 확인해 주세요. ({str(e)})"}
 
 @app.route('/')
 def home():
@@ -90,7 +96,8 @@ def home():
 @app.route('/api/config')
 def get_config():
     api_key = os.getenv("OPENAI_API_KEY")
-    has_key = api_key is not None and str(api_key).startswith("sk-")
+    # 키가 존재하면 AI 모드 활성화
+    has_key = api_key is not None and len(str(api_key)) > 5
     return jsonify({"hasServerKey": has_key, "demoMode": not has_key})
 
 @app.route('/api/analyze', methods=['POST'])
