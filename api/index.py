@@ -22,13 +22,18 @@ CORS(app)
 # ──────────────────────────────────────────────
 
 def get_client(api_key=None):
-    """OpenAI 클라이언트 반환"""
-    # 사용자가 입력한 키가 있으면 우선 사용, 없으면 환경변수 사용
+    """OpenAI 클라이언트 반환 (키 형식 확인 강화)"""
     key = api_key if api_key and api_key.strip() else os.getenv("OPENAI_API_KEY")
     
-    if not key or key == "sk-your-api-key-here" or key.strip() == "":
+    # OpenAI 키는 반드시 sk- 로 시작해야 함. 
+    # stalwart-... 같은 구글 프로젝트 ID가 들어오면 무시하고 데모 모드(None)로 반환.
+    if not key or not key.startswith("sk-") or key == "sk-your-api-key-here":
         return None
-    return OpenAI(api_key=key)
+    
+    try:
+        return OpenAI(api_key=key)
+    except:
+        return None
 
 def extract_menu_google_vision(image_b64):
     """Google Cloud Vision API를 사용하여 텍스트 추출"""
