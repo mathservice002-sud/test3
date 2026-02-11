@@ -512,7 +512,7 @@
                 const stepsHtml = r.steps ? `<ol class="step-list">${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>` : "";
 
                 card.innerHTML = `
-                    <img src="https://source.unsplash.com/featured/800x600/?${imgKeyword},koreanfood" class="recipe-img" alt="${r.name}">
+                    <img src="https://source.unsplash.com/featured/800x600/?${imgKeyword},koreanfood" class="recipe-img" alt="">
                     <div class="badge-row">
                         <span class="tag tag-time">⏱️ ${r.time}분</span>
                         <span class="tag tag-diff">난이도: ${r.diff}</span>
