@@ -42,10 +42,25 @@ def extract_menu_from_image(openai_client, image_b64):
     """이미지 분석 (Google OCR + AI 정리)"""
     raw_text = extract_menu_google_vision(image_b64)
     
+    # 1. 공통 텍스트 검증 로직 (전처리)
     if raw_text:
-        prompt = f"아래 텍스트에서 날짜별 점심 메뉴를 찾아 JSON 형식으로 정리해줘.\n날짜: MM/DD(요일)\n텍스트: {raw_text}\n결과는 ```json ... ``` 블록에 넣어줘."
+        non_menu_keywords = ["구하시오", "정답", "문제", "수학", "계산", "풀이"]
+        menu_keywords = ["식단", "급식", "메뉴", "반찬", "밥", "우유", "칼로리", "영양", "초등학교", "중학교", "고등학교"]
+        
+        # 부정 키워드 발견 시 즉시 차단
+        if any(k in raw_text for k in non_menu_keywords):
+            return {"error": "급식표가 아닌 이미지가 감지되었습니다. (수학 문제 등으로 판독됨)"}
+        
+        # 긍정 키워드가 너무 없으면 의심 (텍스트가 일정 이상일 때만 수행)
+        if len(raw_text) > 20 and not any(k in raw_text for k in menu_keywords):
+             return {"error": "급식표로 보기 어려운 이미지입니다. 식단표를 다시 확인해 주세요."}
+
+    # 2. 프롬프트 구성 (AI용 지시사항 강화)
+    valid_instruction = "먼저 이 이미지가 학교 급식표(식단표)가 맞는지 판단해줘. 만약 급식표가 아니거나 음식 관련 내용이 없다면 반드시 {\"error\": \"이미지 판독 불가 메시지\"} 형식으로만 응답해줘. 급식표가 맞다면 날짜별 메뉴를 JSON으로 정리해줘."
+    if raw_text:
+        prompt = f"{valid_instruction}\n날짜: MM/DD(요일)\n텍스트: {raw_text}\n결과는 ```json ... ``` 블록에 넣어줘."
     else:
-        prompt = "이미지의 급식표를 분석해서 날짜별 메뉴를 JSON으로 정리해줘. 결과는 ```json ... ``` 블록에 넣어줘."
+        prompt = f"{valid_instruction} 결과를 ```json ... ``` 블록에 넣어줘."
 
     messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
     if not raw_text:
@@ -53,12 +68,6 @@ def extract_menu_from_image(openai_client, image_b64):
 
     # 3. 데모 모드 처리 (AI 클라이언트가 없는 경우)
     if not openai_client:
-        # 간단한 텍스트 검증 시뮬레이션
-        if raw_text:
-            non_menu_keywords = ["구하시오", "정답", "문제", "원", "수학"]
-            if any(k in raw_text for k in non_menu_keywords):
-                return {"error": "급식표가 아닌 이미지가 감지되었습니다. (수학 문제 등으로 보임)"}
-
         from datetime import datetime, timedelta
         mock_data = {}
         days_ko = ["월", "화", "수", "목", "금", "토", "일"]
@@ -82,7 +91,12 @@ def extract_menu_from_image(openai_client, image_b64):
         response = openai_client.chat.completions.create(model="gpt-4o-mini", messages=messages, max_tokens=1000)
         raw = response.choices[0].message.content
         match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
-        return json.loads(match.group(1)) if match else {}
+        result = json.loads(match.group(1)) if match else {}
+        
+        # AI가 error 필드를 반환한 경우 그대로 전달
+        if "error" in result:
+            return result
+        return result
     except Exception as e:
         print(f"OpenAI API Error: {e}")
         return {"error": f"AI 분석 중 오류가 발생했습니다. 키를 확인해 주세요. ({str(e)})"}
