@@ -463,6 +463,7 @@
                     document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                     div.classList.add('active');
                     selectedMenu = menuData[date];
+                    clickCount = 0; // 새 날짜 선택 시 횟수 리셋
                 };
                 list.appendChild(div);
             });
@@ -475,13 +476,20 @@
             btn.innerText = "⏳ 맛있는 메뉴 찾는 중...";
 
             try {
+                const ingredients = document.getElementById('ingredients').value;
                 const res = await fetch('/api/recommend', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lunch: selectedMenu, ingredients: document.getElementById('ingredients').value })
+                    body: JSON.stringify({
+                        lunch: selectedMenu,
+                        ingredients: ingredients,
+                        apiKey: localStorage.getItem('dinnerBotKey'),
+                        clickCount: clickCount
+                    })
                 });
                 const data = await res.json();
                 renderResults(data);
+                clickCount++; // 성공 시 횟수 증가
             } catch (e) {
                 alert('추천 중 오류가 발생했습니다.');
             } finally {
@@ -497,6 +505,7 @@
             selectedMenu = "";
             menuData = {};
             patedFile = null;
+            clickCount = 0; // 추천 클릭 횟수 추적
             fileInput.value = "";
 
             // UI 초기화
@@ -519,7 +528,27 @@
         function renderResults(data) {
             document.getElementById('resultArea').style.display = 'block';
             const grid = document.getElementById('recipeGrid');
-            grid.innerHTML = `<div style="margin-bottom:1.5rem; color:var(--text-dim); background: #fff; padding:1.2rem; border-radius:16px; border: 1px solid var(--border); font-size: 0.95rem;">${data.analysis}</div>`;
+            grid.innerHTML = ""; // Clear previous results
+
+            if (!data.recipes || data.recipes.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'analysis-card'; // Reusing analysis-card for styling
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.style.padding = '3rem 1rem';
+                emptyMsg.innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🤔</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #475569; line-height: 1.6;">
+                        ${data.message || "더 이상의 추천 레시피가 없습니다."}
+                    </div>
+                `;
+                grid.appendChild(emptyMsg);
+                return;
+            }
+
+            // Display analysis if available
+            if (data.analysis) {
+                grid.innerHTML += `<div style="margin-bottom:1.5rem; color:var(--text-dim); background: #fff; padding:1.2rem; border-radius:16px; border: 1px solid var(--border); font-size: 0.95rem;">${data.analysis}</div>`;
+            }
 
             data.recipes.forEach(r => {
                 const card = document.createElement('div');

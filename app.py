@@ -105,61 +105,84 @@ def api_recommend():
         import random
         # 데모 모드: 입력된 재료에 맞춰 지능적이고 다양한 가짜 데이터 반환
         
+        # 프론트엔드에서 누적 클릭 횟수를 보내준다고 가정 (없으면 기본 0)
+        click_count = data.get('clickCount', 0)
+        
         has_ingredients = bool(ingredients.strip())
         ing_list = [i.strip() for i in ingredients.split(',') if i.strip()]
         
-        # --- 1. 고품질 전용 템플릿 (특정 키워드 매칭) ---
-        
-        # 고등어 + 무
+        # --- 변수 제어: 3번까지만 다른 메뉴를 보여줌 ---
+        if click_count >= 3:
+            return jsonify({
+                "analysis": "현재 준비된 모든 추천을 확인하셨습니다!",
+                "recipes": [],
+                "message": "데모 데이터베이스에 더 이상의 추천 메뉴가 없습니다. 실제 서비스에서는 무한한 조합이 가능해요! 😉"
+            })
+
+        # --- 고밀도 추천 조합 (클래식 매칭) ---
+        # 1. 고등어 + 무
         if "고등어" in ingredients and "무" in ingredients:
-            return jsonify({
-                "analysis": "고등어와 무의 찰떡궁합! 비린내 없이 시원하고 칼칼한 조림 어떠세요?",
-                "recipes": [{"name": "고등어 무조림", "desc": "양념이 잘 밴 무가 더 맛있는 밥도둑", "time": "30", "diff": "보통", "ingredients": ["고등어", "무", "간장", "고춧가루", "파"], "steps": ["무를 깔고 토막 낸 고등어를 올린다", "양념장을 붓고 국물이 자작해질 때까지 졸인다"], "tip": "무를 먼저 살짝 익힌 후 고등어를 넣으면 더 맛있어요"}],
-                "message": "시원한 무조림 한 점에 오늘 하루의 스트레스도 싹 날려버리세요. 정말 훌륭한 메뉴 선택입니다! 🐟"
-            })
+            options = [
+                {
+                    "analysis": "고등어와 무의 찰떡궁합! 칼칼한 조림 어떠세요?",
+                    "recipes": [{"name": "매콤 고등어 무조림", "desc": "입맛 돋우는 밥도둑", "time": "30", "ingredients": ["고등어", "무", "고춧가루"], "steps": ["무를 깔고 고등어를 올린 뒤 졸인다"], "tip": "무가 투명해질 때까지 푹 익히세요"}],
+                    "message": "밥 두 그릇 예약! 시원한 무와 고소한 고등어의 만남입니다. 🐟"
+                },
+                {
+                    "analysis": "오늘처럼 쌀쌀한 날에는 시원한 생선 지리탕이 최고죠.",
+                    "recipes": [{"name": "맑은 고등어 무국", "desc": "비린내 없이 시원한 국물 요리", "time": "20", "ingredients": ["고등어", "무", "쑥갓"], "steps": ["무로 육수를 내고 싱싱한 고등어를 넣는다"], "tip": "다진 마늘을 충분히 넣어 잡내를 잡으세요"}],
+                    "message": "아이들도 좋아하는 시원담백한 국물이에요. 🍲"
+                }
+            ]
+            return jsonify(options[click_count % len(options)])
         
-        # 소고기 + 떡
+        # 2. 소고기 + 떡
         elif "소고기" in ingredients and ("떡" in ingredients or "가래떡" in ingredients):
-            return jsonify({
-                "analysis": "냉장고에 있는 소고기와 가래떡으로 아이들이 정말 좋아하는 단짠단짠 궁중 떡볶이를 만들 수 있어요.",
-                "recipes": [{"name": "궁중 떡볶이", "desc": "맵지 않아 아이들도 잘 먹는 고급스러운 떡볶이", "time": "20", "diff": "보통", "ingredients": ["가래떡", "소고기(불고기용)", "양파", "표고버섯", "간장소스"], "steps": ["떡은 말랑하게 불리고 고기는 밑간을 한다", "채소와 함께 볶다가 간장 소스로 간을 맞춘다"], "tip": "마지막에 참기름 한 방울과 통깨를 뿌리면 고소함이 폭발해요"}],
-                "message": "영양 가득한 소고기와 쫀득한 떡의 조화처럼, 오늘 저녁 가족들과의 시간도 쫀득하고 행복하시길 바라요. 요리하느라 고생 많으셨습니다! 🍖"
-            })
+            options = [
+                {
+                    "analysis": "단짠단짠 궁중 떡볶이로 아이들 입맛을 사로잡으세요!",
+                    "recipes": [{"name": "궁중 떡볶이", "desc": "맵지 않은 고급 떡볶이", "time": "20", "ingredients": ["소고기", "떡", "간장"], "steps": ["고기와 떡을 달콤한 간장 양념에 볶는다"], "tip": "참기름 한 방울로 마무리!"}],
+                    "message": "쫀득한 식감에 대화도 쫀득해지는 저녁 되세요! 🍖"
+                },
+                {
+                    "analysis": "든든한 소고기 떡국으로 따뜻한 한 끼 추천합니다.",
+                    "recipes": [{"name": "진한 소고기 떡국", "desc": "진한 사골 육수맛이 나는 국물 요리", "time": "15", "ingredients": ["소고기", "떡", "계란"], "steps": ["소고기를 볶다가 물을 붓고 떡을 넣어 끓인다"], "tip": "계란 지단을 올리면 더 예뻐요"}],
+                    "message": "사계절 언제 먹어도 든든한 보양식이죠! 🍲"
+                }
+            ]
+            return jsonify(options[click_count % len(options)])
 
-        # --- 2. 스마트 동적 생성 (어떤 재료든 대응) ---
-        
+        # --- 3. 스마트 동적 생성 (어떤 재료든 대응) ---
         elif has_ingredients:
-            # 첫 번째 재료를 메인으로 사용하여 그럴싸한 레시피 생성
             main_item = ing_list[0]
-            sub_items = ", ".join(ing_list[1:3]) if len(ing_list) > 1 else "각종 채소"
+            sub_item = ing_list[1] if len(ing_list) > 1 else "야채"
             
-            # 요리 스타일 랜덤 결정
-            style = random.choice(["볶음", "조림", "전", "덮밥"])
+            variants = [
+                {"style": "볶음", "emoji": "🔥", "msg": "불맛 가득한 저녁!"},
+                {"style": "전", "emoji": "🍳", "msg": "고소한 냄새가 진동할 거예요."},
+                {"style": "비빔밥", "emoji": "🥗", "msg": "깔끔하게 비벼먹는 한 끼!"}
+            ]
             
+            v = variants[click_count % len(variants)]
             return jsonify({
-                "analysis": f"준비된 {main_item}와(과) {sub_items} 등을 활용해 맛있는 {main_item} {style}을(를) 만들어보세요!",
+                "analysis": f"준비하신 {main_item}와(과) {sub_item}의 조화를 살린 {v['style']} 요리입니다.",
                 "recipes": [{
-                    "name": f"든든한 {main_item} {style}",
-                    "desc": f"{main_item} 본연의 맛을 살린 영양 가득한 한 끼 식사",
+                    "name": f"스페셜 {main_item} {sub_item} {v['style']}",
+                    "desc": f"재료 본연의 맛을 극대화한 {v['style']} 세트",
                     "time": "15",
-                    "diff": "보통",
-                    "ingredients": ing_list + ["간장", "올리고당", "참기름"],
-                    "steps": [
-                        f"준비된 {main_item}을(를) 먹기 좋은 크기로 손질합니다.",
-                        f"팬에 기름을 두르고 {main_item}와(과) 나머지 채소들을 함께 넣고 익힙니다.",
-                        "기호에 맞게 양념을 넣어 간을 맞춘 뒤 마무리합니다."
-                    ],
-                    "tip": f"{main_item}의 식감을 살리려면 너무 오래 익히지 않는 것이 포인트예요!"
+                    "ingredients": ing_list + ["기본 양념"],
+                    "steps": [f"{main_item}와 {sub_item}을 손질한다", "적당한 온도의 팬에 볶거나 부친다"],
+                    "tip": "재료가 타지 않게 주의하세요!"
                 }],
-                "message": f"입력하신 {main_item}에 딱 맞춘 맞춤형 추천입니다. 실제 AI 버전은 더 정교한 조리법을 제안해 드려요! ✨"
+                "message": f"{v['msg']} 맛있게 드세요! {v['emoji']}"
             })
 
-        # --- 3. 기본 폴백 (재료가 없을 때) ---
+        # --- 4. 기본 폴백 ---
         else:
             return jsonify({
-                "analysis": "오늘 무엇을 할지 고민될 때는 누구나 좋아하는 든든한 한 끼를 추천드려요.",
-                "recipes": [{"name": "영양 가득 계란말이", "desc": "채소를 듬뿍 넣어 영양과 색감을 모두 잡은 반찬", "time": "15", "diff": "보통", "ingredients": ["계란", "당근", "파", "소금"], "steps": ["계란을 풀고 잘게 썬 채소를 섞는다", "팬에 조금씩 부어가며 돌돌 말아 익힌다"], "tip": "약불에서 천천히 말아야 모양이 예쁘게 잡혀요"}],
-                "message": "무엇을 만들어도 당신의 정성이 최고의 조미료입니다. 오늘 밤은 가족과 함께 오순도순 따뜻한 식탁 되시길 바라요. 🍀"
+                "analysis": "오늘의 추천 메뉴입니다.",
+                "recipes": [{"name": "영양 계란찜", "desc": "부드러운 식감의 국민 반찬", "time": "10", "ingredients": ["계란", "파"], "steps": ["계란을 풀고 찜기에 찐다"], "tip": "우유를 조금 넣으면 더 부드러워요"}],
+                "message": "간편하지만 든든한 한 끼 되세요! 🐣"
             })
 
     prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}. 점심과 겹치지 않는 저녁 메뉴 2개와 레시피, 그리고 지친 부모님을 위한 맞춤형 응원 멘트를 JSON으로 작성해줘."""
