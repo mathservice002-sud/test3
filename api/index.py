@@ -105,8 +105,8 @@ def api_analyze():
     data = request.json
     api_key = data.get('apiKey')
     image_b64 = data.get('image').split(',')[-1] if ',' in data.get('image', '') else data.get('image')
-    openai_client = get_client(api_key)
-    return jsonify(extract_menu_from_image(openai_client, image_b64))
+    ai_client = get_client(api_key)
+    return jsonify(extract_menu_from_image(ai_client, image_b64))
 
 @app.route('/api/recommend', methods=['POST'])
 def api_recommend():
