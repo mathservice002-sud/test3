@@ -349,7 +349,11 @@
                     <p style="color: var(--text-dim);">급식표 사진을 올리거나 붙여넣으세요</p>
                     <img id="preview" class="preview-img">
                 </div>
-                <button class="btn" id="btnAnalyze">자동 분석 시작</button>
+                <div style="display: flex; gap: 0.8rem;">
+                    <button class="btn" id="btnAnalyze">자동 분석 시작</button>
+                    <button class="btn" id="btnReset"
+                        style="background: #F1F5F9; color: var(--text-dim); box-shadow: none; width: 100px;">초기화</button>
+                </div>
                 <div id="menuList" class="menu-picker"></div>
             </div>
 
@@ -485,6 +489,32 @@
                 btn.innerText = "저녁 메뉴 추천받기";
             }
         };
+
+        document.getElementById('btnReset').onclick = resetApp;
+
+        function resetApp() {
+            // 데이터 초기화
+            selectedMenu = "";
+            menuData = {};
+            patedFile = null;
+            fileInput.value = "";
+
+            // UI 초기화
+            preview.src = "";
+            preview.style.display = 'none';
+            document.getElementById('menuList').innerHTML = "";
+            document.getElementById('ingredients').value = "";
+            document.getElementById('resultArea').style.display = 'none';
+            document.getElementById('recipeGrid').innerHTML = "";
+            document.getElementById('btnRecommend').disabled = true;
+
+            // 토스트 메시지로 안내 (선택사항)
+            const toast = document.getElementById('toast');
+            toast.innerText = "초기화되었습니다. 새로운 사진을 올려주세요.";
+            toast.style.background = "var(--primary)";
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 2000);
+        }
 
         function renderResults(data) {
             document.getElementById('resultArea').style.display = 'block';
