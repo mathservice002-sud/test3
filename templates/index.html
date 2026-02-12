@@ -377,8 +377,15 @@
                     추천받기</button>
                 <div id="resultArea" style="display: none; margin-top: 2rem;">
                     <div
-                        style="color: var(--primary-dark); font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
-                        <span>✨</span> 오늘의 저녁 처방전
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <div
+                            style="color: var(--primary-dark); font-weight: 800; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                            <span>✨</span> 오늘의 저녁 처방전
+                        </div>
+                        <button id="btnRetryTop" onclick="document.getElementById('btnRecommend').click()"
+                            style="background: white; color: var(--primary); border: 2px solid var(--primary); padding: 0.5rem 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 6px rgba(255,107,1,0.05);">
+                            🔄 다른 메뉴 추천
+                        </button>
                     </div>
                     <div id="recipeGrid"></div>
                 </div>
@@ -485,11 +492,18 @@
             Object.keys(menuData).forEach(date => {
                 const div = document.createElement('div');
                 div.className = 'menu-item';
-                div.innerHTML = `<div><b style="color:var(--primary-dark);">${date}</b></div><div style="font-size:0.9rem; color:var(--text-main); margin-top:4px;">${menuData[date]}</div>`;
+                let menuText = menuData[date];
+
+                // [object Object] 방지 로직
+                if (typeof menuText === 'object' && menuText !== null) {
+                    menuText = menuText.menu || menuText.lunch || JSON.stringify(menuText);
+                }
+
+                div.innerHTML = `<div><b style="color:var(--primary-dark);">${date}</b></div><div style="font-size:0.9rem; color:var(--text-main); margin-top:4px;">${menuText}</div>`;
                 div.onclick = () => {
                     document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
                     div.classList.add('active');
-                    selectedMenu = menuData[date];
+                    selectedMenu = menuText;
                     clickCount = 0; // 새 날짜 선택 시 횟수 리셋
                 };
                 list.appendChild(div);
@@ -564,18 +578,22 @@
 
             if (!data.recipes || data.recipes.length === 0) {
                 const emptyMsg = document.createElement('div');
-                emptyMsg.className = 'analysis-card'; // Reusing analysis-card for styling
+                emptyMsg.className = 'memo-box'; // Using memo-box for a kind frame
                 emptyMsg.style.textAlign = 'center';
                 emptyMsg.style.padding = '3rem 1rem';
+                emptyMsg.style.background = '#FFF9F5';
+                emptyMsg.style.borderColor = '#FFEDD5';
                 emptyMsg.innerHTML = `
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🤔</div>
-                    <div style="font-size: 1.1rem; font-weight: 600; color: #475569; line-height: 1.6;">
-                        ${data.message || "더 이상의 추천 레시피가 없습니다."}
+                    <div style="font-size: 3.5rem; margin-bottom: 1.5rem;">🌸</div>
+                    <div style="font-size: 1.2rem; font-weight: 600; color: #9A3412; line-height: 1.8; white-space: pre-wrap;">
+                        ${data.message || "정말 정성껏 찾아보았지만, 현재 재료로는 더 이상 딱 맞는 메뉴를 찾기 어렵네요.\n조금 나중에 다시 물어봐 주시면 새로운 영감을 가져올게요!"}
                     </div>
                 `;
                 grid.appendChild(emptyMsg);
+                document.getElementById('btnRetryTop').style.display = 'none'; // No more retries if empty
                 return;
             }
+            document.getElementById('btnRetryTop').style.display = 'flex';
 
             // Display analysis if available
             if (data.analysis) {

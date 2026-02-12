@@ -29,7 +29,7 @@ def get_client(api_key=None):
             return {"type": "openai", "client": OpenAI(api_key=key)}
         elif key.startswith("AIza"):
             genai.configure(api_key=key)
-            return {"type": "gemini", "client": genai.GenerativeModel('gemini-flash-latest')}
+            return {"type": "gemini", "client": genai.GenerativeModel('gemini-2.5-flash')}
     except Exception as e:
         print(f"Client Init Error: {e}")
     return None
@@ -61,8 +61,8 @@ def extract_menu_from_image(ai_client, image_b64):
              return {"error": "급식표로 보기 어려운 이미지입니다. 식단표를 다시 확인해 주세요."}
 
     # 2. 프롬프트 구성
-    valid_instruction = "이 이미지가 학교 급식표(식단표)가 맞는지 판단하고, 맞다면 날짜별 메뉴를 JSON으로 정리해줘. 급식표가 아니면 {\"error\": \"판독 불가\"} 응답해줘."
-    prompt = f"{valid_instruction}\n텍스트: {raw_text}\n결과는 ```json ... ``` 블록에 넣어줘." if raw_text else f"{valid_instruction} 결과를 ```json ... ``` 블록에 넣어줘."
+    valid_instruction = "이 이미지가 학교 급식표(식단표)가 맞는지 판단하고, 맞다면 날짜별 메뉴를 {'날짜': '메뉴내용'} 형식의 단순한 JSON 객체로 정리해줘. 급식표가 아니면 {\"error\": \"판독 불가\"} 응답해줘."
+    prompt = f"{valid_instruction}\n텍스트: {raw_text}\n결과는 반드시 순수한 JSON 객체여야 하며, 다른 텍스트는 포함하지 마." if raw_text else f"{valid_instruction} 결과는 반드시 순수한 JSON 객체여야 해."
 
     # 3. 실제 AI 분석
     if not ai_client:
@@ -82,8 +82,22 @@ def extract_menu_from_image(ai_client, image_b64):
                 response = ai_client["client"].generate_content(prompt)
             raw = response.text
 
-        match = re.search(r"```json\s*(.*?)\s*```", raw, re.DOTALL)
-        result = json.loads(match.group(1)) if match else {}
+        # JSON 추출 보강
+        res_content = raw
+        if "```json" in res_content:
+            res_content = re.sub(r'```json\s*|\s*```', '', res_content, flags=re.DOTALL)
+        
+        result = json.loads(res_content.strip())
+
+        # 후처리: {'school_lunch_menu': [...]} 대응
+        if isinstance(result, dict) and "school_lunch_menu" in result:
+            new_result = {}
+            for item in result["school_lunch_menu"]:
+                if isinstance(item, dict) and "date" in item and "menu" in item:
+                    new_result[item["date"]] = item["menu"]
+            if new_result:
+                result = new_result
+
         return result
     except Exception as e:
         print(f"AI API Error: {e}")
@@ -114,6 +128,7 @@ def api_recommend():
     lunch = data.get('lunch', '')
     ingredients = data.get('ingredients', '')
     ai_client = get_client(data.get('apiKey'))
+    clickCount = data.get('clickCount', 0)
     
     if not ai_client:
         return jsonify({
@@ -124,11 +139,13 @@ def api_recommend():
 
     # 실제 AI 추천 로직
     try:
+        diff_instruction = "이전 추천과는 다른 새로운 메뉴로 추천해줘." if clickCount > 0 else ""
         prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}.
 [지침]
-1. 입력된 냉장고 재료 중 하나라도 활용하여 점심 메뉴와 겹치지 않는 맛있는 저녁 메뉴 1개를 추천해줘.
+1. 입력된 냉장고 재료 중 하나라도 활용하여 점심 메뉴와 겹치지 않는 맛있는 저녁 메뉴 1개를 추천해줘. {diff_instruction}
 2. 냉장고 재료 외에 만약 더 필요한 재료가 있다면 'more_ingredients' 항목에 따로 나열해줘.
-3. 응답은 반드시 아래 JSON 형식을 지켜줘:
+3. 만약 더 이상 추천할 만한 적절한 메뉴가 없다면(너무 많이 추천했거나 조건이 안 맞을 때), 'recipes' 배열을 비워두고(empty list), 'message' 항목에 사용자에게 정중하고 상냥하게 사과하며 양해를 구하는 멘트를 작성해줘.
+4. 응답은 반드시 아래 JSON 형식을 지켜줘:
 {{
   "analysis": "오늘의 식단 분석 및 조언",
   "recipes": [
@@ -143,7 +160,7 @@ def api_recommend():
       "tip": "전문가의 팁"
     }}
   ],
-  "message": "부모님을 위한 따뜻한 응원 멘트"
+  "message": "부모님을 위한 따뜻한 응원 멘트(또는 더 이상 추천할 메뉴가 없을 때의 정중한 거절 메시지)"
 }}"""
         if ai_client["type"] == "openai":
             response = ai_client["client"].chat.completions.create(
@@ -152,11 +169,12 @@ def api_recommend():
                 response_format={"type": "json_object"}
             )
             res_content = response.choices[0].message.content
-        else: # Gemini
-            response = ai_client["client"].generate_content(prompt + " 응답은 반드시 순수 JSON 객체로 해줘.")
+        else: # Gemini (최적화 모드)
+            response = ai_client["client"].generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json"}
+            )
             res_content = response.text
-            # Gemini는 가끔 ```json ... ```를 붙이므로 제거
-            res_content = re.sub(r'```json\s*|\s*```', '', res_content, flags=re.DOTALL)
 
         return jsonify(json.loads(res_content))
     except Exception as e:
