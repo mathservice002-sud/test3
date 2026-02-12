@@ -19,8 +19,15 @@ CORS(app)
 
 def get_client(api_key=None):
     """API 클라이언트 생성 (OpenAI sk- 또는 Google AIza- 지원)"""
-    key = api_key if api_key and api_key.strip() else os.getenv("OPENAI_API_KEY")
+    # 1. 인자로 받은 키가 유효하면 우선 사용
+    if api_key and len(str(api_key).strip()) > 5:
+        key = str(api_key).strip()
+    # 2. 없으면 환경 변수에서 조회
+    else:
+        key = os.getenv("OPENAI_API_KEY")
+
     if not key or len(str(key)) < 5:
+        print("API Key is missing or invalid.")
         return None
     
     key = str(key).strip()
