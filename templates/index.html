@@ -281,6 +281,12 @@
             color: #475569;
         }
 
+        .tag-more {
+            background: #FFF1F2;
+            color: #BE123C;
+            border: 1px solid #FECDD3;
+        }
+
         .tip-box {
             margin-top: 1.5rem;
             padding: 1.2rem;
@@ -589,8 +595,11 @@
                     </div>
                     <div class="recipe-title">${r.name}</div>
                     <p style="font-size:1rem; color:var(--text-dim);">${r.desc}</p>
-                    <div style="margin-top:1.2rem;">
-                        <span class="tag tag-ingred">🥕 주재료: ${r.ingredients.join(', ')}</span>
+                    <div style="margin-top:1.2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                        <span class="tag tag-ingred">🥕 활용 재료: ${r.ingredients.join(', ')}</span>
+                        ${r.more_ingredients && r.more_ingredients.length > 0 ? `
+                            <span class="tag tag-more">🛒 추가 필요: ${r.more_ingredients.join(', ')}</span>
+                        ` : ''}
                     </div>
                     ${stepsHtml}
                     <div class="tip-box">

@@ -29,7 +29,7 @@ def get_client(api_key=None):
             return {"type": "openai", "client": OpenAI(api_key=key)}
         elif key.startswith("AIza"):
             genai.configure(api_key=key)
-            return {"type": "gemini", "client": genai.GenerativeModel('gemini-2.5-flash')}
+            return {"type": "gemini", "client": genai.GenerativeModel('gemini-flash-latest')}
     except Exception as e:
         print(f"Client Init Error: {e}")
     return None
@@ -124,7 +124,27 @@ def api_recommend():
 
     # 실제 AI 추천 로직
     try:
-        prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}. 점심과 겹치지 않는 저녁 메뉴 1개와 레시피, 그리고 지친 부모님을 위한 맞춤형 응원 멘트를 JSON으로 작성해줘."""
+        prompt = f"""[상황] 오늘 아이 점심: {lunch}, 냉장고 재료: {ingredients}.
+[지침]
+1. 입력된 냉장고 재료 중 하나라도 활용하여 점심 메뉴와 겹치지 않는 맛있는 저녁 메뉴 1개를 추천해줘.
+2. 냉장고 재료 외에 만약 더 필요한 재료가 있다면 'more_ingredients' 항목에 따로 나열해줘.
+3. 응답은 반드시 아래 JSON 형식을 지켜줘:
+{{
+  "analysis": "오늘의 식단 분석 및 조언",
+  "recipes": [
+    {{
+      "name": "메뉴명",
+      "desc": "선정이유 및 설명",
+      "time": 소요시간(분),
+      "diff": "난이도(쉬움/보통/어려움)",
+      "ingredients": ["사용된 냉장고 재료"],
+      "more_ingredients": ["추가로 필요한 재료"],
+      "steps": ["레시피 단계1", "레시피 단계2", ...],
+      "tip": "전문가의 팁"
+    }}
+  ],
+  "message": "부모님을 위한 따뜻한 응원 멘트"
+}}"""
         if ai_client["type"] == "openai":
             response = ai_client["client"].chat.completions.create(
                 model="gpt-4o-mini",
